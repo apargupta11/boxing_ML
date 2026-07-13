@@ -1,15 +1,36 @@
-from preprocessing.merger import merge
-
+from preprocessing.window_labeler import WindowLabeler
+from analysis.analyze_dataset import analyze
+from training.dataset_builder import build_master_dataset
+from training.train_random_forest import train_random_forest
 
 def process(raw_path, event_path):
 
-    print("\n========== PREPROCESSING ==========\n")
+    print("\n===================================")
+    print("STARTING PREPROCESSING")
+    print("===================================\n")
 
-    merged_path = merge(
+    # ----------------------------------
+    # Step 1: Window Labeling
+    # ----------------------------------
+
+    labeler = WindowLabeler()
+
+    training_path = labeler.process(
         raw_path,
         event_path
     )
 
-    print("\n========== DONE ==========\n")
+    # ----------------------------------
+    # Step 2: Dataset Analysis
+    # ----------------------------------
 
-    return merged_path
+    training_path = labeler.process(raw_path, event_path)
+
+    analyze(training_path)
+
+    master_dataset_path = build_master_dataset()
+
+    model_path = train_random_forest(master_dataset_path)
+ 
+
+    return master_dataset_path

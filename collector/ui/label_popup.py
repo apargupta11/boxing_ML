@@ -3,63 +3,75 @@ import tkinter as tk
 
 class LabelPopup:
 
+    LABELS = {
+        "0": "NO_PUNCH",
+        "1": "LEFT_PUNCH",
+        "2": "RIGHT_PUNCH",
+        "4": "LEFT_MISS",
+        "5": "RIGHT_MISS",
+    }
+
     def ask(self, event):
 
         self.result = None
 
         root = tk.Tk()
-
         root.title("Punch Detected")
-        root.geometry("350x220")
+        root.geometry("320x180")
         root.resizable(False, False)
+        root.attributes("-topmost", True)
+        root.focus_force()
 
         tk.Label(
             root,
             text="🥊 Punch Detected",
             font=("Arial", 16, "bold")
-        ).pack(pady=10)
+        ).pack(pady=(10, 5))
 
         tk.Label(
             root,
             text=f"Event ID : {event['event_id']}",
-            font=("Arial", 12)
+            font=("Arial", 11)
         ).pack()
 
         tk.Label(
             root,
             text=f"Hand : {event['hand']}",
-            font=("Arial", 12)
-        ).pack(pady=5)
+            font=("Arial", 11)
+        ).pack(pady=(0, 10))
 
         tk.Label(
             root,
-            text="Was this a real punch?",
-            font=("Arial", 12)
-        ).pack(pady=10)
-
-        def punch():
-            self.result = "PUNCH"
-            root.destroy()
-
-        def no_punch():
-            self.result = "NO_PUNCH"
-            root.destroy()
-
-        tk.Button(
-            root,
-            text="PUNCH",
-            width=15,
-            height=2,
-            command=punch
-        ).pack(pady=5)
-
-        tk.Button(
-            root,
-            text="NO PUNCH",
-            width=15,
-            height=2,
-            command=no_punch
+            text="Press a key",
+            font=("Arial", 12, "bold")
         ).pack()
+
+        tk.Label(
+            root,
+            text="""
+0 → No Punch
+1 → Left Punch
+2 → Right Punch
+4 → Left Miss
+5 → Right Miss
+""",
+            font=("Consolas", 11),
+            justify="left"
+        ).pack()
+
+        def on_key(event_obj):
+
+            key = event_obj.keysym
+
+            if key in self.LABELS:
+                self.result = self.LABELS[key]
+                root.destroy()
+
+        # Bind number keys
+        root.bind("<Key>", on_key)
+
+        # Ensure popup receives keyboard focus
+        root.after(50, lambda: root.focus_force())
 
         root.mainloop()
 
