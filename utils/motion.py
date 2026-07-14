@@ -35,12 +35,15 @@ def left_motion_score(row):
     """
     Computes motion score for LEFT glove.
 
-    row can be:
-        - CSV row (list)
-        - Packet (dict)
+    Supports:
+        1. Training CSV row (list)
+        2. BLE packet (dict)
     """
 
+    # -----------------------------------
     # CSV Row
+    # -----------------------------------
+
     if isinstance(row, list):
 
         ax = float(row[1])
@@ -51,16 +54,21 @@ def left_motion_score(row):
         gy = float(row[5])
         gz = float(row[6])
 
-    # Dictionary Packet
+    # -----------------------------------
+    # BLE Packet
+    # -----------------------------------
+
     else:
 
-        ax = float(row["L_ax"])
-        ay = float(row["L_ay"])
-        az = float(row["L_az"])
+        L = row["L"]
 
-        gx = float(row["L_gx"])
-        gy = float(row["L_gy"])
-        gz = float(row["L_gz"])
+        ax = float(L["ax"])
+        ay = float(L["ay"])
+        az = float(L["az"])
+
+        gx = float(L["gx"])
+        gy = float(L["gy"])
+        gz = float(L["gz"])
 
     acc = acceleration_magnitude(
         ax,
@@ -82,10 +90,17 @@ def left_motion_score(row):
 # ====================================================
 
 def right_motion_score(row):
-
     """
     Computes motion score for RIGHT glove.
+
+    Supports:
+        1. Training CSV row (list)
+        2. BLE packet (dict)
     """
+
+    # -----------------------------------
+    # CSV Row
+    # -----------------------------------
 
     if isinstance(row, list):
 
@@ -97,15 +112,21 @@ def right_motion_score(row):
         gy = float(row[11])
         gz = float(row[12])
 
+    # -----------------------------------
+    # BLE Packet
+    # -----------------------------------
+
     else:
 
-        ax = float(row["R_ax"])
-        ay = float(row["R_ay"])
-        az = float(row["R_az"])
+        R = row["R"]
 
-        gx = float(row["R_gx"])
-        gy = float(row["R_gy"])
-        gz = float(row["R_gz"])
+        ax = float(R["ax"])
+        ay = float(R["ay"])
+        az = float(R["az"])
+
+        gx = float(R["gx"])
+        gy = float(R["gy"])
+        gz = float(R["gz"])
 
     acc = acceleration_magnitude(
         ax,
@@ -127,11 +148,11 @@ def right_motion_score(row):
 # ====================================================
 
 def combined_motion_score(row):
-
     """
     Motion detector score.
 
-    Uses the larger motion from either glove.
+    Uses whichever glove currently has
+    the larger amount of motion.
     """
 
     left = left_motion_score(row)

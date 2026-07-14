@@ -6,6 +6,13 @@ from collector.config import MODEL_DIR
 from preprocessing.feature_engineering import extract_features
 
 
+LABEL_MAP = {
+    0: "NO_PUNCH",
+    1: "LEFT_PUNCH",
+    2: "RIGHT_PUNCH",
+}
+
+
 class Predictor:
 
     def __init__(self):
@@ -16,7 +23,6 @@ class Predictor:
         )
 
         if not os.path.exists(model_path):
-
             raise FileNotFoundError(
                 f"Model not found: {model_path}"
             )
@@ -30,40 +36,49 @@ class Predictor:
         print(f"Loaded : {model_path}")
 
     # ====================================================
-    # Predict One Motion Segment
+    # Predict
     # ====================================================
 
     def predict(self, segment):
-
         """
         Parameters
         ----------
-        segment : np.ndarray
+        segment : dict
 
-        Shape:
-            (window_size, 12)
+        {
+            "window": ndarray,
+            "peak_motion": ...,
+            "peak_index": ...,
+            "trigger_hand": ...,
+            "duration_packets": ...
+        }
 
         Returns
         -------
-        prediction : int
-
-            0 = No Punch
-            1 = Left Punch
-            2 = Right Punch
+        dict
         """
+
+        # -------------------------------
+        # Extract window
+        # -------------------------------
+
+        window = segment["window"]
+
+        windows = np.expand_dims(
+            window,
+            axis=0
+        )
 
         # -------------------------------
         # Feature Engineering
         # -------------------------------
-
-        windows = np.array([segment])
 
         features, _ = extract_features(
             windows
         )
 
         # -------------------------------
-        # Predict
+        # Prediction
         # -------------------------------
 
         prediction = self.model.predict(
@@ -74,7 +89,27 @@ class Predictor:
             features
         )[0]
 
-        return prediction, probability
+        confidence = float(np.max(probability))
+
+        return {
+
+            "class": int(prediction),
+
+            "label": LABEL_MAP[prediction],
+
+            "confidence": confidence,
+
+            "probabilities": probability,
+
+            "peak_motion": segment["peak_motion"],
+
+            "peak_index": segment["peak_index"],
+
+            "trigger_hand": segment["trigger_hand"],
+
+            "duration_packets": segment["duration_packets"]
+
+        }
 
     # ====================================================
     # Pretty Prediction
@@ -82,27 +117,12 @@ class Predictor:
 
     def predict_name(self, segment):
 
-        prediction, probability = self.predict(
-            segment
-        )
-
-        label_map = {
-
-            0: "NO_PUNCH",
-
-            1: "LEFT_PUNCH",
-
-            2: "RIGHT_PUNCH"
-
-        }
-        # if prediction==0:
-        #     return None
-        
+        result = self.predict(segment)
 
         return (
 
-            label_map[prediction],
+            result["label"],
 
-            probability
+            result["confidence"]
 
         )
