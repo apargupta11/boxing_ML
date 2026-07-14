@@ -4,37 +4,34 @@ import os
 from collector.config import (
     LABEL_MAP,
     TRAINING_DIR,
-    WINDOW_BEFORE,
-    WINDOW_AFTER,
 )
 
 from preprocessing.motion_segmenter import (
-    segment_punch
+    segment_punch,
 )
 
 
 class WindowLabeler:
 
-    def __init__(self):
-
-        self.before = WINDOW_BEFORE
-        self.after = WINDOW_AFTER
+    # ====================================================
+    # Create Training Dataset
+    # ====================================================
 
     def process(
         self,
         raw_path,
         event_path,
-        output_dir=TRAINING_DIR
+        output_dir=TRAINING_DIR,
     ):
 
         os.makedirs(
             output_dir,
-            exist_ok=True
+            exist_ok=True,
         )
 
         output_path = os.path.join(
             output_dir,
-            os.path.basename(raw_path)
+            os.path.basename(raw_path),
         )
 
         # ----------------------------------
@@ -50,7 +47,7 @@ class WindowLabeler:
             rows = list(reader)
 
         # ----------------------------------
-        # Default labels
+        # Initialize Labels
         # ----------------------------------
 
         labels = [
@@ -71,54 +68,57 @@ class WindowLabeler:
 
             for event in reader:
 
-                trigger = int(event["start_row"]) - 1
+                trigger = int(
+                    event["start_row"]
+                ) - 1
 
-                hand = event["hand"].strip().upper()
+                hand = event[
+                    "hand"
+                ].strip().upper()
 
                 label = LABEL_MAP.get(
+
                     hand,
+
                     LABEL_MAP["NONE"]
+
                 )
 
                 # ----------------------------------
-                # Segment Punch
+                # Dynamic Motion Segmentation
                 # ----------------------------------
 
-                try:
+                start, end = segment_punch(
 
-                    start, end = segment_punch(
+                    rows=rows,
 
-                        rows=rows,
+                    trigger=trigger,
 
-                        trigger=trigger,
+                    hand=hand,
 
-                        hand=hand
-
-                    )
-
-                except Exception:
-
-                    # ----------------------------------
-                    # Fallback to old fixed window
-                    # ----------------------------------
-
-                    start = max(
-                        0,
-                        trigger - self.before
-                    )
-
-                    end = min(
-                        len(rows) - 1,
-                        trigger + self.after
-                    )
+                )
 
                 # ----------------------------------
-                # Apply Label
+                # Safety
+                # ----------------------------------
+
+                start = max(
+                    0,
+                    start,
+                )
+
+                end = min(
+                    len(rows) - 1,
+                    end,
+                )
+
+                # ----------------------------------
+                # Apply Labels
                 # ----------------------------------
 
                 for i in range(
                     start,
-                    end + 1
+                    end + 1,
                 ):
 
                     labels[i] = label
@@ -130,7 +130,7 @@ class WindowLabeler:
         with open(
             output_path,
             "w",
-            newline=""
+            newline="",
         ) as f:
 
             writer = csv.writer(f)
@@ -138,14 +138,16 @@ class WindowLabeler:
             writer.writerow(
 
                 header + [
+
                     "activity_label"
+
                 ]
 
             )
 
             for row, label in zip(
                 rows,
-                labels
+                labels,
             ):
 
                 writer.writerow(
@@ -153,10 +155,10 @@ class WindowLabeler:
                 )
 
         print("\n======================================")
-        print("Training dataset created successfully!")
-
-        print(f"Saved to : {output_path}")
-
+        print("TRAINING DATASET CREATED")
+        print("======================================")
+        print(f"Rows  : {len(rows)}")
+        print(f"Saved : {output_path}")
         print("======================================\n")
 
         return output_path

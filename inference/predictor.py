@@ -95,6 +95,9 @@ class Predictor:
             2: "RIGHT_PUNCH"
 
         }
+        # if prediction==0:
+        #     return None
+        
 
         return (
 

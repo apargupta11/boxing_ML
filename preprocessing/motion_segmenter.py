@@ -1,10 +1,6 @@
 import math
 
 
-# =====================================================
-# Motion Score
-# =====================================================
-
 def acceleration_magnitude(ax, ay, az):
 
     return math.sqrt(
